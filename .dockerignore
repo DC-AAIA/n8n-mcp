@@ -8,10 +8,9 @@ npm-debug.log
 # Exclude all .env.* files except .env.example
 .env.*
 !.env.example
-# Keep nodes.db but exclude other database files
+# Exclude all database files — entrypoint rebuild.js regenerates on startup
 data/*.db
 data/*.db-*
-!data/nodes.db
 dist
 .DS_Store
 *.log
