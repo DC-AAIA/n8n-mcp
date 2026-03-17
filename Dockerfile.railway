@@ -45,6 +45,9 @@ COPY --from=builder /app/dist ./dist
 
 # Copy necessary data and configuration files
 COPY data/ ./data/
+# Remove pre-built nodes.db so entrypoint runs rebuild.js on first startup
+# The upstream's pre-built DB may have schema drift; fresh rebuild ensures compatibility
+RUN rm -f ./data/nodes.db ./data/nodes.db-shm ./data/nodes.db-wal
 COPY src/database/schema-optimized.sql ./src/database/schema-optimized.sql
 COPY .env.example ./
 
