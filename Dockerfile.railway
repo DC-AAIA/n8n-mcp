@@ -44,10 +44,9 @@ RUN apk add --no-cache python3 make g++ && \
 COPY --from=builder /app/dist ./dist
 
 # Copy necessary data and configuration files
-COPY data/ ./data/
-# Remove pre-built nodes.db so entrypoint runs rebuild.js on first startup
-# The upstream's pre-built DB may have schema drift; fresh rebuild ensures compatibility
-RUN rm -f ./data/nodes.db ./data/nodes.db-shm ./data/nodes.db-wal
+# Only copy .gitkeep — nodes.db is rebuilt by entrypoint on first startup
+RUN mkdir -p ./data
+COPY data/.gitkeep ./data/.gitkeep
 COPY src/database/schema-optimized.sql ./src/database/schema-optimized.sql
 COPY .env.example ./
 
@@ -55,9 +54,8 @@ COPY .env.example ./
 COPY docker/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Create data directory if it doesn't exist and set permissions
-RUN mkdir -p ./data && \
-    chmod 755 ./data
+# Set permissions on data directory
+RUN chmod 755 ./data
 
 # Add metadata labels
 LABEL org.opencontainers.image.source="https://github.com/czlonkowski/n8n-mcp"
@@ -87,8 +85,8 @@ ENV CORS_ORIGIN="*"
 # Expose port (Railway will set PORT automatically)
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+# Health check — allow 120s start period for rebuild.js database generation
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
   CMD curl -f http://127.0.0.1:${PORT:-3000}/health || exit 1
 
 # Optimized entrypoint (identical to main Dockerfile)
